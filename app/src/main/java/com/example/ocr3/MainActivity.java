@@ -1,5 +1,6 @@
 package com.example.ocr3;
 
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -13,6 +14,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
 
+import com.google.android.gms.common.images.Size;
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.text.TextBlock;
@@ -46,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         if(!textRecognizer.isOperational()){
             Log.w("Tag", "Dependencies not loaded yet");
         }else{
-            cameraSource = new CameraSource.Builder(getApplicationContext(), textRecognizer).setFacing(CameraSource.CAMERA_FACING_BACK).setRequestedPreviewSize(300, 100).setAutoFocusEnabled(true).setRequestedFps(2.0f).build();
+            cameraSource = new CameraSource.Builder(getApplicationContext(), textRecognizer).setFacing(CameraSource.CAMERA_FACING_BACK).setRequestedPreviewSize(1280, 1024).setAutoFocusEnabled(true).setRequestedFps(2.0f).build();
 
             surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
                 @Override
@@ -80,18 +82,49 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void receiveDetections(@NonNull Detector.Detections<TextBlock> detections) {
+                public void receiveDetections(Detector.Detections<TextBlock> detections) {
                     final SparseArray<TextBlock> items = detections.getDetectedItems();
-                    if(items.size() != 0){
+
+                    if (items.size() != 0) {
                         textView.post(new Runnable() {
                             @Override
                             public void run() {
                                 StringBuilder stringBuilder = new StringBuilder();
-                                for (int i = 0; i < items.size(); i++){
+                                OverlayView overlayView = findViewById(R.id.overlay_view);
+
+                                for (int i = 0; i < items.size(); i++) {
                                     TextBlock item = items.valueAt(i);
-                                    stringBuilder.append(item.getValue());
-                                    stringBuilder.append("\n");
+
+                                    // Mendapatkan informasi konfigurasi kamera
+                                    Size previewSize = cameraSource.getPreviewSize();
+                                    int cameraWidth = previewSize.getWidth();
+                                    int cameraHeight = previewSize.getHeight();
+
+                                    // Mendapatkan dimensi tampilan overlay
+                                    int overlayWidth = overlayView.getWidth();
+                                    int overlayHeight = overlayView.getHeight();
+
+                                    // Menghitung faktor skala untuk aspek rasio tampilan
+                                    float scaleX = (float) cameraWidth / overlayWidth;
+                                    float scaleY = (float) cameraHeight / overlayHeight;
+
+                                    // Menghitung koordinat kamera yang sesuai dengan bingkai overlay
+                                    int left = (int) (300 * scaleX);
+                                    int top = (int) (200 * scaleY);
+                                    int right = (int) (800 * scaleX);
+                                    int bottom = (int) (400 * scaleY);
+
+                                    // Periksa apakah teks terletak di dalam bingkai yang diinginkan
+                                    if (item.getBoundingBox().left >= left &&
+                                            item.getBoundingBox().top >= top &&
+                                            item.getBoundingBox().right <= right &&
+                                            item.getBoundingBox().bottom <= bottom) {
+                                        stringBuilder.append(item.getValue());
+                                        stringBuilder.append("\n");
+                                    }
                                 }
+
+                                // Menampilkan teks yang berada di dalam bingkai ke dalam TextView
                                 textView.setText(stringBuilder.toString());
                             }
                         });

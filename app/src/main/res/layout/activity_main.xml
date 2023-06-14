@@ -5,11 +5,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
-    <SurfaceView
-        android:id="@+id/camera"
+    <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
-        android:layout_height="367dp" />
+        android:layout_height="match_parent">
+
+        <SurfaceView
+            android:id="@+id/camera"
+            android:layout_width="match_parent"
+            android:layout_height="367dp" />
+
+        <com.example.ocr3.OverlayView
+            android:id="@+id/overlay_view"
+            android:layout_width="match_parent"
+            android:layout_height="367dp" />
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/text"
